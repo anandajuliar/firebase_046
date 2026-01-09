@@ -16,14 +16,15 @@ import com.example.firebase_046.R
 import com.example.firebase_046.view.route.DestinasiDetail
 import com.example.firebase_046.viewmodel.PenyediaViewModel
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailSiswaScreen(
-    navigateToEditItem: (String) -> Unit,
+    navigateToEditItem: (Int) -> Unit,
     navigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DetailViewModel = viewModel(factory = PenyediaViewModel.Factory)
-) {
+){
     Scaffold(
         topBar = {
             SiswaTopAppBar(
@@ -33,32 +34,35 @@ fun DetailSiswaScreen(
             )
         },
         floatingActionButton = {
+            val uiState = viewModel.statusUIDetail
             FloatingActionButton(
                 onClick = {
-                    val state = viewModel.detailUiState
-                    if (state is DetailUiState.Success) {
-                        navigateToEditItem(state.siswa.id.toString())
-                    }
+                    when(uiState) { is StatusUIDetail.Success ->
+                        navigateToEditItem(uiState.satusiswa!!.id.toInt()) else->{}}
                 },
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_large))
+
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.edit_siswa)
+                    contentDescription = stringResource(R.string.update),
                 )
             }
-        },
-        modifier = modifier
+        }, modifier = modifier
     ) { innerPadding ->
-        BodyDetailSiswa(
-            detailUiState = viewModel.detailUiState,
-            retryAction = { viewModel.getSiswaById() },
-            onDeleteClick = {
-                viewModel.deleteSiswa()
-                navigateBack()
+        val coroutineScope = rememberCoroutineScope()
+        BodyDetailDataSiswa(
+            statusUIDetail = viewModel.statusUIDetail,
+            onDelete = {
+                coroutineScope.launch {
+                    viewModel.hapusSatuSiswa()
+                    navigateBack()
+                }
             },
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
         )
     }
 }
